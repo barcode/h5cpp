@@ -7,7 +7,7 @@
 #ifndef  H5CPP_SALL_HPP
 #define  H5CPP_SALL_HPP
 
-namespace h5{ namespace impl {
+namespace h5::impl {
 	struct max_dims_t{}; struct current_dims_t{};
 	struct dims_t{}; struct chunk_t{};  struct offset_t{}; struct stride_t{};  struct count_t{}; struct block_t{};
 
@@ -71,7 +71,7 @@ namespace h5{ namespace impl {
 		int rank;
 		hsize_t data[N];
 	};
-}}
+}
 
 /*PUBLIC CALLS*/
 namespace h5 {
