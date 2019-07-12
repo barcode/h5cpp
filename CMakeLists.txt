@@ -48,7 +48,7 @@ if(DOXYGEN_FOUND)
 	#add_subdirectory (doxy)
 endif()
 
-#add_subdirectory(examples)
+add_subdirectory(examples)
 option(H5CPP_BUILD_TESTS "Build tests" ON)
 if(H5CPP_BUILD_TESTS)
     enable_testing()
