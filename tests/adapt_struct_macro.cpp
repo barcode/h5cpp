@@ -77,16 +77,16 @@ std::ostream& operator<<(std::ostream& out, const T t[N] )
 }
 
 #define _do_out(R, data, child) << t.child << " "
-#define H5CPP_ADAPT_AND_REGISTER_AND_COUT(T,...)                \
+#define H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(T,...)                \
     std::ostream& operator<<(std::ostream& out, const T& t)     \
     {                                                           \
         out _h5cpp_variadic_for_each(_do_out, T, __VA_ARGS__);  \
         return out;                                             \
     }                                                           \
-    H5CPP_ADAPT_AND_REGISTER(T,__VA_ARGS__)
+    H5CPP_ADAPT_AND_REGISTER_STRUCT(T,__VA_ARGS__)
 
 
-H5CPP_ADAPT_AND_REGISTER_AND_COUT(
+H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(
     Inner,
     idx,
     _char,
@@ -114,12 +114,12 @@ H5CPP_ADAPT_AND_REGISTER_AND_COUT(
     _ar_c_c_int
 )
 
-H5CPP_ADAPT_AND_REGISTER_AND_COUT(
+H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(
     Outer::Mid,
     idx, ar
 )
 
-H5CPP_ADAPT_AND_REGISTER_AND_COUT(
+H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(
     Outer,
     idx, ar
 )

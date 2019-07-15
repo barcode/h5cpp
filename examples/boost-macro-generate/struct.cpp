@@ -56,7 +56,7 @@ struct Outer {
 
 //generate glue code required by h5cpp
 
-H5CPP_ADAPT_AND_REGISTER(
+H5CPP_ADAPT_AND_REGISTER_STRUCT(
     Inner,
     idx,
     _char,
@@ -84,12 +84,12 @@ H5CPP_ADAPT_AND_REGISTER(
     _ar_c_c_int
     )
 
-H5CPP_ADAPT_AND_REGISTER(
+H5CPP_ADAPT_AND_REGISTER_STRUCT(
     Outer::Mid,
     idx, ar
     )
 
-H5CPP_ADAPT_AND_REGISTER(
+H5CPP_ADAPT_AND_REGISTER_STRUCT(
     Outer,
     idx, ar
     )

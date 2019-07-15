@@ -151,7 +151,7 @@ namespace h5::impl::detail {
 #define _h5cpp_variadic_for_each(macro, data, ...) BOOST_PP_SEQ_FOR_EACH(macro, data, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
 #define _h5cpp_type_elem(R, data, child)  type_meta_info_insert(t, _h5cpp_stringify(child), HOFFSET(data, child), &data::child);
-#define H5CPP_ADAPT_AND_REGISTER(T,...)                                         \
+#define H5CPP_ADAPT_AND_REGISTER_STRUCT(T,...)                                  \
     namespace h5::impl::detail {                                                \
         template <> struct type_meta_info<T> {                                  \
             /* required for HOFFSET */                                          \

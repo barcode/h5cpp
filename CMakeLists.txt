@@ -58,11 +58,15 @@ if(H5CPP_BUILD_TESTS)
 endif()
 
 
-#installation
 target_include_directories(h5cpp INTERFACE
 	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
 )
+#convenience targets
 
+add_library(h5cpp-static-hdf5 INTERFACE)
+target_link_libraries(h5cpp-static-hdf5 INTERFACE z hdf5_cpp-static)
+
+#installation
 set(INSTALL_DIR_CMAKE    "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/cmake/h5cpp")
 set(INSTALL_DIR_INCLUDE  "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}")
 set(INSTALL_DIR_EXAMPLES "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/h5cpp")
@@ -71,7 +75,10 @@ message( "-- Install directory: ${INSTALL_DIR_INCLUDE}")
 
 # copy header only library into DESTDIR
 install(DIRECTORY h5cpp DESTINATION ${INSTALL_DIR_INCLUDE})
-install(TARGETS h5cpp EXPORT h5cpp-targets)
+
+#targets
+install(TARGETS h5cpp             EXPORT h5cpp-targets)
+install(TARGETS h5cpp-static-hdf5 EXPORT h5cpp-targets)
 
 install(DIRECTORY examples/attributes     DESTINATION "${INSTALL_DIR_EXAMPLES}")
 install(DIRECTORY examples/basics         DESTINATION "${INSTALL_DIR_EXAMPLES}")
