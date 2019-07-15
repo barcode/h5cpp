@@ -117,7 +117,7 @@ namespace h5 {
 	template<class T, class... args_t>
 	void read( const std::string& file_path, const std::string& dataset_path,T* ptr, args_t&&... args ){
 		h5::fd_t fd = h5::open( file_path, H5F_ACC_RDWR );
-		h5::read( fd, dataset_path, ptr, args...);
+        h5::read<T>( fd, dataset_path, ptr, args...);
 	}
 
 
@@ -181,7 +181,7 @@ namespace h5 {
 	void read( const std::string& file_path, const std::string& dataset_path, T& ref, args_t&&... args ){
 
 		h5::fd_t fd = h5::open( file_path, H5F_ACC_RDWR );
-		h5::read( fd, dataset_path, ref, args...);
+        h5::read<T>( fd, dataset_path, ref, args...);
 	}
 
 /***************************  OBJECT *****************************/
@@ -206,13 +206,13 @@ namespace h5 {
 
 		h5::count_t size;
 		const h5::count_t& count = arg::get(size, args...);
-		h5::block_t  default_block{1,1,1,1,1,1,1};
-		const h5::block_t& block = arg::get( default_block, args...);
 
 		if constexpr( !tcount::present ){ // read count ::= current_dim of file space 
 			h5::sp_t file_space = h5::get_space( ds );
 			h5::get_simple_extent_dims(file_space, size);
 		} else {
+            h5::block_t  default_block{1,1,1,1,1,1,1};
+            const h5::block_t& block = arg::get( default_block, args...);
 			for(int i=0;i<count.rank;i++) size[i] = count[i] * block[i];
 			size.rank = count.rank;
 		}

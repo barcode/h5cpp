@@ -125,34 +125,37 @@ void>::type h5::pt_t::append( const T& ref ) try {
 
 template<class T> inline typename std::enable_if< !h5::impl::is_scalar<T>::value,
 void>::type h5::pt_t::append( const T& ref ) try {
-	auto dims = impl::size( ref );
+	const auto dims = impl::size( ref );
 
 	*offset = *current_dims;
 	*current_dims += 1;
 	h5::set_extent(ds, current_dims);
-	auto ptr_ = impl::data( ref );
-	auto dims_ = impl::size( ref );
+    const void* const ptr_ = static_cast<const void*>(impl::data( ref ));
+//	const auto dims_ = impl::size( ref );
 
-	switch( dims_.size() ){
+	switch( dims.size() ){ ///TODO fix this
 		case 1: // vector
 			if( dims[0] * element_size == block_size )
-				pipeline.write_chunk(offset, block_size, (void*) ptr_ );
+				pipeline.write_chunk(offset, block_size, ptr_ );
 			else throw h5::error::io::packet_table::write(
-					H5CPP_ERROR_MSG("dimension mismatch: "
-						+ std::to_string( dims[0] * element_size) + " != " + std::to_string(block_size) ));
+					H5CPP_ERROR_MSG("dimension mismatch (vector interpretation): "
+                        + "dim[0] (" + std::to_string(dims[0])
+                        + ") * element_size (" +std::to_string(element_size)
+                        + ") = "
+                        + std::to_string( dims[0] * element_size) + " != block_size (" + std::to_string(block_size) + ')'));
 			break;
 		case 2: //matrix
 			if( dims[0] * dims[1] * element_size == block_size )
-				pipeline.write_chunk(offset, block_size, (void*) ptr_ );
+				pipeline.write_chunk(offset, block_size, ptr_ );
 			else throw h5::error::io::packet_table::write(
-					H5CPP_ERROR_MSG("dimension mismatch: "
+					H5CPP_ERROR_MSG("dimension mismatch (matrix interpretation): "
 						+ std::to_string( dims[0] * dims[1] * element_size) + " != " + std::to_string(block_size) ));
 			break;
 		case 3: // cube
 			if( dims[0] * dims[1] * dims[2] * element_size == block_size )
-				pipeline.write_chunk(offset, block_size, (void*) ptr_ );
+				pipeline.write_chunk(offset, block_size, ptr_ );
 			else throw h5::error::io::packet_table::write(
-					H5CPP_ERROR_MSG("dimension mismatch: "
+					H5CPP_ERROR_MSG("dimension mismatch (cube interpretation): "
 						+ std::to_string( dims[0] * dims[1] * dims[2] * element_size) + " != " + std::to_string(block_size) ));
 			;break;
 		default:

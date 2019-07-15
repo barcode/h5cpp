@@ -8,9 +8,18 @@
 #define  H5CPP_SALL_HPP
 
 namespace h5::impl {
-	struct max_dims_t{}; struct current_dims_t{};
-	struct dims_t{}; struct chunk_t{};  struct offset_t{}; struct stride_t{};  struct count_t{}; struct block_t{};
-
+    //tags for the array type
+	struct max_dims_t{};
+    struct current_dims_t{};
+    
+	struct dims_t{};
+    struct chunk_t{};
+    struct offset_t{};
+    struct stride_t{};
+    struct count_t{};
+    struct block_t{};
+    
+    //type tagged array to store sizes
 	template <typename T, int N=H5CPP_MAX_RANK>
 	struct array  {
 

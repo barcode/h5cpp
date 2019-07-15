@@ -1,16 +1,8 @@
 # check if the correct version of hdf5 available
-set(H5CPP_VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
-set(HDF5_FIND_DEBUG FALSE)
-include(FindHDF5)
-if(HDF5_VERSION VERSION_LESS ${H5CPP_VERSION})
-	message(FATAL_ERROR "H5CPP examples require of HDF5 v${H5CPP_VERSION} or greater!!!")
-else()
-	message("-- H5CPP ${PROJECT_VERSION} matches with minimum required HDF5 v${HDF5_VERSION}")
-endif()
+#cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/"
-	"${CMAKE_SOURCE_DIR}/cmake/eigen3"  "${CMAKE_SOURCE_DIR}/cmake/dlib" )
-set(CMAKE_CXX_STANDARD 17)
+### match hdf5 versioning x.x.x.h5cpp-version
+#project(h5cpp-tests VERSION 1.10.4.1 LANGUAGES CXX C)
 
 function(h5cpp_test target)
     add_executable(${target} ${ARGN})
@@ -42,4 +34,10 @@ h5cpp_test(test-stl         stl.cpp         event_listener.hpp abstract.h)
 h5cpp_test(test-integral    integral.cpp    event_listener.hpp abstract.h)
 h5cpp_test(test-pipeline    pipeline.cpp    event_listener.hpp abstract.h)
 h5cpp_test(test-armadillo   armadillo.cpp   event_listener.hpp abstract.h)
-h5cpp_test(test-packettable packettable.cpp event_listener.hpp struct.h)
+h5cpp_test(test-packettable packettable.cpp event_listener.hpp abstract.h struct.h)
+
+find_package(Eigen3 QUIET)
+if(Eigen3_FOUND)
+    h5cpp_test(test-adapt-macro adapt_struct_macro.cpp abstract.h)
+    target_link_libraries(test-adapt-macro PRIVATE Eigen3::Eigen)
+endif()

@@ -108,6 +108,5 @@ namespace h5::impl {
 			return ::Eigen::Array<T,R,C,::Eigen::ColMajor,MR,MC>( dims[1], dims[0] );
 	}};
 }
-
 #endif
 #endif

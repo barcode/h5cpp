@@ -13,12 +13,14 @@ project(h5cpp-dev VERSION 1.10.4.1 LANGUAGES CXX C)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/"
 	"${CMAKE_SOURCE_DIR}/cmake/eigen3"  "${CMAKE_SOURCE_DIR}/cmake/dlib" )
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(h5cpp INTERFACE)
 
 # check if the correct version of hdf5 available
 set(H5CPP_VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
 include(FindHDF5)
+set(HDF5_FIND_DEBUG FALSE)
 if(HDF5_VERSION VERSION_LESS ${H5CPP_VERSION})
 	message(FATAL_ERROR "-- !!! H5CPP examples require of HDF5 v${H5CPP_VERSION} or greater!!!")
 else()

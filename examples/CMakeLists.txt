@@ -205,17 +205,29 @@ endif()
 #add_dependencies(examples examples-attributes)
 
 ## before-after: before ###
-add_executable(examples-before EXCLUDE_FROM_ALL "before-after/compound.c")
+add_executable(examples-before EXCLUDE_FROM_ALL
+    before-after/compound.h
+    before-after/compound.c
+)
 target_link_libraries(examples-before ${LIBS} )
 add_dependencies(examples examples-before)
 
 ## before-after: after ###
-add_executable(examples-after EXCLUDE_FROM_ALL "before-after/compound.cpp")
+add_executable(examples-after EXCLUDE_FROM_ALL 
+    before-after/generated.h
+    before-after/compound.h
+    before-after/compound.cpp
+)
 target_link_libraries(examples-after ${LIBS} )
 add_dependencies(examples examples-after)
 
 ## compound ###
-add_executable(examples-compound EXCLUDE_FROM_ALL "compound/struct.cpp")
+add_executable(examples-compound EXCLUDE_FROM_ALL
+    compound/generated.h
+    compound/struct.cpp
+    compound/struct.h
+    compound/utils.hpp
+)
 target_link_libraries(examples-compound ${LIBS} )
 add_dependencies(examples examples-compound)
 
@@ -238,7 +250,12 @@ target_link_libraries(examples-raw ${LIBS} )
 add_dependencies(examples examples-raw)
 
 ## stl ###
-add_executable(examples-stl EXCLUDE_FROM_ALL "stl/vector.cpp")
+add_executable(examples-stl EXCLUDE_FROM_ALL
+    stl/generated.h
+    stl/struct.h
+    stl/utils.hpp
+    stl/vector.cpp
+)
 target_link_libraries(examples-stl ${LIBS} )
 add_dependencies(examples examples-stl)
 
@@ -247,5 +264,11 @@ add_executable(examples-transform EXCLUDE_FROM_ALL "transform/transform.cpp")
 target_link_libraries(examples-transform ${LIBS} )
 add_dependencies(examples examples-transform)
 
+if(Boost_FOUND AND Eigen3_FOUND)
+    add_executable(examples-boost-macro-generate 
+        boost-macro-generate/struct.cpp
+    )
+    target_link_libraries(examples-boost-macro-generate ${LIBS} )
+endif()
 
 

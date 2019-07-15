@@ -59,7 +59,8 @@ namespace h5::impl {
 }
 
 namespace h5 {
-	// type-name helper class for compile time id and printout 
+	// type-name helper class for compile time id and printout
+    // can't use typeid or boost demangle since they are not constexpr
 	template <class T> struct name {
 		static constexpr char const * value = "n/a";
 	};

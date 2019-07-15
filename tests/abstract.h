@@ -24,6 +24,9 @@
 #include <h5cpp/all>
 #include "event_listener.hpp"
 
+#if __has_include ( <boost/core/demangle.hpp> )
+#include <boost/core/demangle.hpp>
+#endif
 
 template <typename T> class AbstractTest
 					: public ::testing::Test {
@@ -31,6 +34,12 @@ public:
 	void SetUp() {
 		dir = ::testing::UnitTest::GetInstance()->current_test_info()->name();
 		type = h5::name<T>::value;
+        if(type == "n/a")
+            #if __has_include ( <boost/core/demangle.hpp> )
+                type = boost::core::demangle(typeid(T).name());
+            #else
+                type = typeid(T).name();
+            #endif
 		name = dir + "/" + type;
 		this->fd = h5::open("test.h5", H5F_ACC_RDWR );
 	}

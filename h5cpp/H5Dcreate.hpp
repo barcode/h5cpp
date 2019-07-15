@@ -67,7 +67,11 @@ namespace h5 {
 		// use move semantics to set space
 		space_id =  tmax_dims::present ?
 			std::move( h5::create_simple( current_dims, max_dims ) ) :  std::move( h5::create_simple( current_dims ) );
-		using element_t = typename impl::decay<T>::type;
+        using element_t = typename std::conditional<
+            std::is_array<T>::value,
+            T,
+            typename impl::decay<T>::type
+            >::type;
 		h5::dt_t<element_t> type;
 		return h5::createds(fd, dataset_path, type, space_id, lcpl, dcpl, dapl);
 
