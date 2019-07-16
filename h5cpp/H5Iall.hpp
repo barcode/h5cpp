@@ -31,8 +31,6 @@ namespace h5::impl {
 	struct at_t;
 }
 
-
-
 namespace h5::impl::detail {
 	/* this mechanism is to alter the behaviour of h5::hid_t through 
 	 * template specialization. The base class is ::any which provides

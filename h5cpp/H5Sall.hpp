@@ -80,6 +80,12 @@ namespace h5::impl {
 		int rank;
 		hsize_t data[N];
 	};
+	template <class T> inline
+	size_t nelements( const h5::impl::array<T>& arr ){
+		size_t size = 1;
+		for( int i=0; i<arr.rank; i++) size *= arr[i];
+		return size;
+	}
 }
 
 /*PUBLIC CALLS*/
@@ -100,5 +106,5 @@ namespace h5 {
 	using dims   = dims_t;
 	using current_dims   = current_dims_t;
 	using max_dims       = max_dims_t;
-}
+	}
 #endif
