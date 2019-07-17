@@ -100,33 +100,6 @@ namespace h5::impl::detail {
     struct type_meta_info <T[N]> : type_meta_info <std::array<T, N>>
     {};
 
-    #if defined(EIGEN_CORE_H) || defined(H5CPP_USE_EIGEN3)
-    /* Specializations of type_meta_info for all fixed size Eigen matrice types.
-     */
-    template <class Scalar, int Rs, int Cs, int Options>
-    struct type_meta_info <Eigen::Matrix<Scalar, Rs, Cs, Options, Rs, Cs >> {
-        using type = Eigen::Matrix<Scalar, Rs, Cs, Options, Rs, Cs>;
-        static_assert(Rs > 0);
-        static_assert(Cs > 0);
-        static constexpr bool specialized = true;
-        static constexpr bool close_type = true;
-        static ::hid_t create() {
-            ::hid_t subt = type_meta_info<Scalar>::create();
-            constexpr hsize_t bounds[2] = {Rs, Cs};
-            ::hid_t t = H5Tarray_create(
-                subt,
-                2,
-                bounds
-            );
-            if constexpr(type_meta_info<Scalar>::close_type) {
-                H5Tclose(subt);
-            }
-            return t;
-        }
-    };
-    #endif
-    
-    
     /* Inserts the type with the given name and offset into the parent type.
      * This function is a convenience function.
      */
@@ -141,36 +114,6 @@ namespace h5::impl::detail {
         }
     }
 }
-//#if __has_include(<boost/preprocessor/seq/for_each.hpp>)
-#include <boost/preprocessor/seq/for_each.hpp>
-#include <boost/preprocessor/variadic/to_seq.hpp>
-
-#define _h5cpp_stringify_impl(...) #__VA_ARGS__
-#define _h5cpp_stringify(...) _h5cpp_stringify_impl(__VA_ARGS__)
-
-#define _h5cpp_variadic_for_each(macro, data, ...) BOOST_PP_SEQ_FOR_EACH(macro, data, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
-
-#define _h5cpp_type_elem(R, data, child)  type_meta_info_insert(t, _h5cpp_stringify(child), HOFFSET(data, child), &data::child);
-#define H5CPP_ADAPT_AND_REGISTER_STRUCT(T,...)                                  \
-    namespace h5::impl::detail {                                                \
-        template <> struct type_meta_info<T> {                                  \
-            /* required for HOFFSET */                                          \
-            static_assert(std::is_standard_layout_v<T>);                        \
-            static constexpr bool specialized = true;                           \
-            static constexpr bool close_type = true;                            \
-            static ::hid_t create() {                                           \
-                ::hid_t t = H5Tcreate(H5T_COMPOUND, sizeof(T));                 \
-                _h5cpp_variadic_for_each(_h5cpp_type_elem, T, __VA_ARGS__)      \
-                return t;                                                       \
-            }                                                                   \
-        };                                                                      \
-    }                                                                           \
-    namespace h5 {                                                              \
-        template <> struct name<T> {                                            \
-            static constexpr char const * value = _h5cpp_stringify(T);          \
-        };                                                                      \
-    }
-//#endif
 
 /* template specialization from hid_t< .. > type which provides syntactic sugar in the form
  * h5::dt_t<int> dt; 
@@ -261,5 +204,65 @@ inline std::ostream& operator<<(std::ostream &os, const h5::dt_t<T>& dt) {
 	os << ( H5Iis_valid( id ) > 0 ? " valid" : " invalid");
 	return os;
 }
+#endif
 
+
+#if ! defined (_detail_H5CPP_type_meta_info_eigen) && (defined(EIGEN_CORE_H) || defined(H5CPP_USE_EIGEN3))
+#define _detail_H5CPP_type_meta_info_eigen
+namespace h5::impl::detail {
+    /* Specializations of type_meta_info for all fixed size Eigen matrice types.
+         */
+    template <class Scalar, int Rs, int Cs, int Options>
+    struct type_meta_info <Eigen::Matrix<Scalar, Rs, Cs, Options, Rs, Cs >> {
+        using type = Eigen::Matrix<Scalar, Rs, Cs, Options, Rs, Cs>;
+        static_assert(Rs > 0);
+        static_assert(Cs > 0);
+        static constexpr bool specialized = true;
+        static constexpr bool close_type = true;
+        static ::hid_t create() {
+            ::hid_t subt = type_meta_info<Scalar>::create();
+            constexpr hsize_t bounds[2] = {Rs, Cs};
+            ::hid_t t = H5Tarray_create(
+                subt,
+                2,
+                bounds
+                );
+            if constexpr(type_meta_info<Scalar>::close_type) {
+                H5Tclose(subt);
+            }
+            return t;
+        }
+    };
+}
+#endif
+
+#if ! defined (_h5cpp_stringify_impl) && __has_include(<boost/preprocessor/seq/for_each.hpp>)
+#include <boost/preprocessor/seq/for_each.hpp>
+#include <boost/preprocessor/variadic/to_seq.hpp>
+
+#define _h5cpp_stringify_impl(...) #__VA_ARGS__
+#define _h5cpp_stringify(...) _h5cpp_stringify_impl(__VA_ARGS__)
+
+#define _h5cpp_variadic_for_each(macro, data, ...) BOOST_PP_SEQ_FOR_EACH(macro, data, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+#define _h5cpp_type_elem(R, data, child)  type_meta_info_insert(t, _h5cpp_stringify(child), HOFFSET(data, child), &data::child);
+#define H5CPP_ADAPT_AND_REGISTER_STRUCT(T,...)                                  \
+    namespace h5::impl::detail {                                                \
+        template <> struct type_meta_info<T> {                                  \
+            /* required for HOFFSET */                                          \
+            static_assert(std::is_standard_layout_v<T>);                        \
+            static constexpr bool specialized = true;                           \
+            static constexpr bool close_type = true;                            \
+            static ::hid_t create() {                                           \
+                ::hid_t t = H5Tcreate(H5T_COMPOUND, sizeof(T));                 \
+                _h5cpp_variadic_for_each(_h5cpp_type_elem, T, __VA_ARGS__)      \
+                return t;                                                       \
+            }                                                                   \
+        };                                                                      \
+    }                                                                           \
+    namespace h5 {                                                              \
+        template <> struct name<T> {                                            \
+            static constexpr char const * value = _h5cpp_stringify(T);          \
+        };                                                                      \
+    }
 #endif
