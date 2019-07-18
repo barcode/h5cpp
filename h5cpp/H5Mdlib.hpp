@@ -29,8 +29,8 @@ namespace h5::impl {
 	}
 	// read write access
 	template <class Object, class T = impl::decay_t<Object>> inline
-	typename std::enable_if< h5::dlib::is_supported<Object>::value,
-	T*>::type data( Object& ref ){
+	std::enable_if_t< h5::dlib::is_supported<Object>::value, T*>
+	data( Object& ref ){
 			return &ref(0,0);
 	}
 	template<class T> struct rank<h5::dlib::rowmat<T>> : public std::integral_constant<size_t,2>{};
