@@ -10,20 +10,20 @@
 #if defined(_BOOST_UBLAS_MATRIX_) || defined(H5CPP_USE_UBLAS_MATRIX)
 namespace h5::ublas {
 		template<class T> using rowmat 	= ::boost::numeric::ublas::matrix<T>;
-		template <class Object, class T = typename impl::decay<Object>::type> 
+		template <class Object, class T = impl::decay_t<Object>>
 			using is_supportedm = std::integral_constant<bool, std::is_same_v<Object,h5::ublas::rowmat<T>>>;
 }
 namespace h5::impl {
 	// 1.) object -> H5T_xxx
 	template <class T> struct decay<h5::ublas::rowmat<T>>{ typedef T type; };
 	// get read access to datastaore
-	template <class Object, class T = typename impl::decay<Object>::type> inline
+	template <class Object, class T = impl::decay_t<Object>> inline
 	std::enable_if_t< h5::ublas::is_supportedm<Object>::value, const T*>
 	data(const Object& ref ){
 			return ref.data().begin();
 	}
 	// read write access
-	template <class Object, class T = typename impl::decay<Object>::type> inline
+	template <class Object, class T = impl::decay_t<Object>> inline
 	std::enable_if_t< h5::ublas::is_supportedm<Object>::value, T*>
 	data( Object& ref ){
 			return ref.data().begin();
@@ -40,17 +40,17 @@ namespace h5::impl {
 #if defined(_BOOST_UBLAS_VECTOR_) || defined(H5CPP_USE_UBLAS_VECTOR)
 namespace h5::ublas {
 		template<class T> using rowvec = ::boost::numeric::ublas::vector<T>;
-		template <class Object, class T = typename impl::decay<Object>::type>
+		template <class Object, class T = impl::decay_t<Object>>
 			using is_supportedv = std::integral_constant<bool, std::is_same_v<Object,h5::ublas::rowvec<T>>>;
 }
 namespace h5::impl {
 	template <class T> struct decay<h5::ublas::rowvec<T>>{ typedef T type; };
-	template <class Object, class T = typename impl::decay<Object>::type> inline
+	template <class Object, class T = impl::decay_t<Object>> inline
 	std::enable_if_t< h5::ublas::is_supportedv<Object>::value, const T*>
 	data(const Object& ref ){
 			return ref.data().begin();
 	}
-	template <class Object, class T = typename impl::decay<Object>::type> inline
+	template <class Object, class T = impl::decay_t<Object>> inline
 	std::enable_if_t< h5::ublas::is_supportedv<Object>::value, T*>::type
 	data( Object& ref ){
 			return ref.data().begin();
