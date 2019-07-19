@@ -71,8 +71,7 @@ message( "-- Install directory: ${INSTALL_DIR_INCLUDE}")
 install(DIRECTORY h5cpp DESTINATION ${INSTALL_DIR_INCLUDE})
 
 #targets
-install(TARGETS h5cpp             EXPORT h5cpp-targets)
-install(TARGETS h5cpp-static-hdf5 EXPORT h5cpp-targets)
+install(TARGETS h5cpp EXPORT h5cpp-targets)
 
 install(DIRECTORY examples/attributes     DESTINATION "${INSTALL_DIR_EXAMPLES}")
 install(DIRECTORY examples/basics         DESTINATION "${INSTALL_DIR_EXAMPLES}")

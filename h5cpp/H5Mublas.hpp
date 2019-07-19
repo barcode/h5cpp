@@ -51,7 +51,7 @@ namespace h5::impl {
 			return ref.data().begin();
 	}
 	template <class Object, class T = impl::decay_t<Object>> inline
-	std::enable_if_t< h5::ublas::is_supportedv<Object>::value, T*>::type
+	std::enable_if_t< h5::ublas::is_supportedv<Object>::value, T*>
 	data( Object& ref ){
 			return ref.data().begin();
 	}
