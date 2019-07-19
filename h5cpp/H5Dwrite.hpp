@@ -69,7 +69,7 @@ namespace h5 {
 	*  \par_file_path \par_dataset_path \par_ref \par_offset \par_count \par_dxpl \tpar_T \returns_herr 
  	*/ 
 	template <class T, class... args_t>
-	typename std::enable_if<!std::is_same<T,char**>::value,
+	typename std::enable_if<!std::is_same_v<T,char**>,
 	h5::ds_t>::type write( const h5::ds_t& ds, const T& ref,   args_t&&... args  ) try {
 		// element types: pod | [signed|unsigned](int8 | int16 | int32 | int64) | float | double | std::string
 		using element_t = typename impl::decay<T>::type;
@@ -80,7 +80,7 @@ namespace h5 {
 		const h5::count_t& count = arg::get(default_count, args...);
 
 		// std::string is variable length
-		if constexpr( std::is_same<std::string,element_t>::value ){
+		if constexpr( std::is_same_v<std::string,element_t> ){
 			std::vector<char*> ptr;
 			try {
 				for( const auto& reference:ref)

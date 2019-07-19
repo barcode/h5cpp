@@ -16,8 +16,8 @@ namespace h5::blaze {
 
 		// is_linalg_type := filter
 		template <class Object, class T = typename impl::decay<Object>::type> using is_supported =
-		std::integral_constant<bool, std::is_same<Object,rowmat<T>>::value || std::is_same<Object,colmat<T>>::value
-			|| std::is_same<Object,rowvec<T>>::value ||  std::is_same<Object,colvec<T>>::value>;
+		std::integral_constant<bool, std::is_same_v<Object,rowmat<T>> || std::is_same_v<Object,colmat<T>>
+			|| std::is_same_v<Object,rowvec<T>> ||  std::is_same_v<Object,colvec<T>>>;
 }
 
 namespace h5::impl {

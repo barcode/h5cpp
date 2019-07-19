@@ -29,6 +29,8 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/"
 	"${CMAKE_SOURCE_DIR}/cmake/eigen3"  "${CMAKE_SOURCE_DIR}/cmake/dlib" )
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(WIN32)
 	message(STATUS "***WARNING: h5cpp is not fully tested on windows, but know to work ***")
@@ -104,13 +106,16 @@ else()
 endif()
 
 if( ${dlib_FOUND} )
-	message( "-- Found: dlib library, added to examples" )
-	add_executable(examples-dlib EXCLUDE_FROM_ALL "linalg/dlib.cpp")
-	# dlib doesn't like c++17
-	target_compile_options(examples-dlib PRIVATE "-w")
-	target_link_libraries(examples-dlib ${LIBS} )
-	set_property(TARGET examples-dlib PROPERTY CXX_STANDARD 14)
-	add_dependencies(examples examples-dlib)
+    if(dlib_VERSION VERSION_GREATER_EQUAL "19.5")
+        message( "-- Found: dlib library, added to examples" )
+        add_executable(examples-dlib EXCLUDE_FROM_ALL "linalg/dlib.cpp")
+        # dlib doesn't like c++17
+        target_compile_options(examples-dlib PRIVATE "-w")
+        target_link_libraries(examples-dlib ${LIBS} dlib::dlib)
+        add_dependencies(examples examples-dlib)
+    else()
+        message( "-- Found: dlib library, but it is too old to support c++17 (upgrade dlib)")
+    endif()
 endif()
 
 if( ${Eigen3_FOUND} )

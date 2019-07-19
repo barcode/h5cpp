@@ -12,8 +12,6 @@ cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(h5cpp-dev VERSION 1.10.4.1 LANGUAGES CXX C)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/"
 	"${CMAKE_SOURCE_DIR}/cmake/eigen3"  "${CMAKE_SOURCE_DIR}/cmake/dlib" )
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(h5cpp INTERFACE)
 
@@ -61,10 +59,6 @@ endif()
 target_include_directories(h5cpp INTERFACE
 	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
 )
-#convenience targets
-
-add_library(h5cpp-static-hdf5 INTERFACE)
-target_link_libraries(h5cpp-static-hdf5 INTERFACE z hdf5_cpp-static)
 
 #installation
 set(INSTALL_DIR_CMAKE    "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/cmake/h5cpp")

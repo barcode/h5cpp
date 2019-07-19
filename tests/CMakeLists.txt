@@ -4,6 +4,10 @@
 ### match hdf5 versioning x.x.x.h5cpp-version
 #project(h5cpp-tests VERSION 1.10.4.1 LANGUAGES CXX C)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 function(h5cpp_test target)
     add_executable(${target} ${ARGN})
     target_include_directories(${target}

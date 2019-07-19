@@ -15,7 +15,7 @@ namespace h5::dlib {
 			::dlib::memory_manager_stateless_kernel_1<char>,
 			::dlib::row_major_layout>;
 		template <class Object, class T = typename impl::decay<Object>::type>
-			using is_supported = std::integral_constant<bool, std::is_same<Object,h5::dlib::rowmat<T>>::value>;
+			using is_supported = std::integral_constant<bool, std::is_same_v<Object,h5::dlib::rowmat<T>>>;
 }
 namespace h5::impl {
 	// 1.) object -> H5T_xxx

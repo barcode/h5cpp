@@ -25,7 +25,7 @@ namespace h5 {
  	*/ 
 
 	template<class T, class... args_t>
-	typename std::enable_if<!std::is_same<T,char**>::value,
+	typename std::enable_if<!std::is_same_v<T,char**>,
 	void>::type read( const h5::ds_t& ds, T* ptr, args_t&&... args ) try {
 		using toffset  = typename arg::tpos<const h5::offset_t&,const args_t&...>;
 		using tstride  = typename arg::tpos<const h5::stride_t&,const args_t&...>;
@@ -112,7 +112,7 @@ namespace h5 {
 	template<class T, class... args_t>
 	void read( const std::string& file_path, const std::string& dataset_path,T* ptr, args_t&&... args ){
 		h5::fd_t fd = h5::open( file_path, H5F_ACC_RDWR );
-        h5::read<T>( fd, dataset_path, ptr, args...);
+		h5::read<T>( fd, dataset_path, ptr, args...);
 	}
 
 
@@ -176,7 +176,7 @@ namespace h5 {
 	void read( const std::string& file_path, const std::string& dataset_path, T& ref, args_t&&... args ){
 
 		h5::fd_t fd = h5::open( file_path, H5F_ACC_RDWR );
-        h5::read<T>( fd, dataset_path, ref, args...);
+		h5::read<T>( fd, dataset_path, ref, args...);
 	}
 
 /***************************  OBJECT *****************************/
@@ -191,7 +191,7 @@ namespace h5 {
 	* \par_ds \par_offset \par_stride \par_count \par_block \tpar_T \returns_object 
  	*/
 	template<class T, class D=typename impl::decay<T>::type, class... args_t>
-	typename std::enable_if<!std::is_same<D,std::string>::value,
+	typename std::enable_if<!std::is_same_v<D,std::string>,
 	T>::type read( const h5::ds_t& ds, args_t&&... args ){
 	// if 'count' isn't specified use the one inside the hdf5 file, once it is obtained
 	// collapse dimensions to the rank of the object returned and create this T object
@@ -232,7 +232,7 @@ namespace h5 {
  	*/
 
 	template<class T, class D=typename impl::decay<T>::type, class... args_t>
-	typename std::enable_if<std::is_same<D,std::string>::value,
+	typename std::enable_if<std::is_same_v<D,std::string>,
 	T>::type read( const h5::ds_t& ds, args_t&&... args ){
 	// if 'count' isn't specified use the one inside the hdf5 file, once it is obtained
 	// collapse dimensions to the rank of the object returned and create this T object

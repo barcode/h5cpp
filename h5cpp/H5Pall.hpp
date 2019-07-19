@@ -24,7 +24,7 @@ namespace h5::impl {
 	  	}
 		// prevents property type mismatch at compile time:
 		template <class R>
-		typename std::enable_if< std::is_same<typename R::hidtype, hidtype>::value ,
+		typename std::enable_if< std::is_same_v<typename R::hidtype, hidtype>,
 		const prop_base<Derived, phid_t>& >::type
 		operator|( const R& rhs ) const {
 			rhs.copy( handle );
