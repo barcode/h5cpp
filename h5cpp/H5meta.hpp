@@ -45,7 +45,7 @@ namespace h5::arg {
 		return std::get<idx::value>( tuple );
 	}
 	template <int idx, class... args_t>
-	typename std::tuple_element<idx, std::tuple<args_t...> >::type&
+	std::tuple_element_t<idx, std::tuple<args_t...> >&
 	getn(args_t&&... args ){
 		auto tuple = std::forward_as_tuple(args...);
 		return std::get<idx>( tuple );
