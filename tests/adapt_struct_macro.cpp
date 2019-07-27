@@ -5,7 +5,22 @@
 
 #define GOOGLE_STRIP_LOG 1
 
+//force enable everything
+#define H5CPP_USE_DLIB
+#define H5CPP_USE_BLAZE
+#define H5CPP_USE_EIGEN3
+#define H5CPP_USE_ITPP_MATRIX
+#define H5CPP_USE_ITPP_VECTOR
+#define H5CPP_USE_UBLAS_MATRIX
+#define H5CPP_USE_UBLAS_VECTOR
+
+#include <dlib/matrix.h>
+#include <blaze/Blaze.h>
 #include <Eigen/Core>
+#include <itpp/itbase.h>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/vector.hpp>
+
 #include <h5cpp/all>
 
 #include <gtest/gtest.h>
@@ -24,23 +39,32 @@ using array_s_c_int = std::array<int[3], 2>;
 using array_c_s_int = std::array<int, 3>[2];
 using array_c_c_int = int[2][3];
 
-struct Inner {
+struct Simple {
     MyUInt              idx;
-             char       _char;
+    char       _char;
     unsigned char       _uchar;
-             short      _short;
+    short      _short;
     unsigned short      _ushort;
-             int        _int;
+    int        _int;
     unsigned int        _uint;
-             long       _long;
+    long       _long;
     unsigned long       _ulong;
-             long long  _llong;
+    long long  _llong;
     unsigned long long  _ullong;
     float               _float;
     double              _double;
     long double         _ldouble;
     bool                _bool;
-    Eigen::Matrix3f     _m3f;
+};
+struct SimpleEigen {
+    MyUInt              idx;
+    Eigen::Vector3f     _vec3f;
+    Eigen::Matrix4f     _mat4f;
+};
+struct Inner {
+    MyUInt              idx;
+    Simple              _simple;
+    SimpleEigen         _eigen;
     array_s_c_eigen     _ar_s_c_eigen;
     array_c_s_eigen     _ar_c_s_eigen;
     array_s_s_eigen     _ar_s_s_eigen;
@@ -77,17 +101,22 @@ std::ostream& operator<<(std::ostream& out, const T t[N] )
 }
 
 #define _do_out(R, data, child) << t.child << " "
-#define H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(T,...)                \
-    std::ostream& operator<<(std::ostream& out, const T& t)     \
-    {                                                           \
-        out _h5cpp_variadic_for_each(_do_out, T, __VA_ARGS__);  \
-        return out;                                             \
-    }                                                           \
+//has to be memcmp because nan != nan
+#define _do_eq(R, data, child) (std::memcmp( (const void*) &l.child, (const void*) &r.child, sizeof(r.child)) == 0) &&
+#define H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(T,...)             \
+    std::ostream& operator<<(std::ostream& out, const T& t)         \
+    {                                                               \
+        out _h5cpp_variadic_for_each(_do_out, T, __VA_ARGS__);      \
+        return out;                                                 \
+    }                                                               \
+    bool operator==(const T& l, const T& r)                         \
+    {                                                               \
+        return _h5cpp_variadic_for_each(_do_eq,, __VA_ARGS__) true; \
+    }                                                               \
     H5CPP_ADAPT_AND_REGISTER_STRUCT(T,__VA_ARGS__)
 
-
 H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(
-    Inner,
+    Simple,
     idx,
     _char,
     _uchar,
@@ -102,8 +131,21 @@ H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(
     _float,
     _double,
     _ldouble,
-    _bool,
-    _m3f,
+    _bool
+)
+
+H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(
+    SimpleEigen,
+    idx,
+    _vec3f,
+    _mat4f
+)
+
+H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(
+    Inner,
+    idx,
+    _simple,
+    _eigen,
     _ar_s_c_eigen,
     _ar_c_s_eigen,
     _ar_s_s_eigen,
@@ -125,34 +167,37 @@ H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(
 )
 
 
-template <typename T> class AdaptStructTest : public AbstractTest<T>{};
+template <typename T> class AdaptStructTest : public AbstractTest<T> {};
 typedef ::testing::Types<
     H5CPP_TEST_PRIMITIVE_TYPES, // check nothing broke / everything works as expected
-    int[1],
-    int[1][2],
-    int[1][2][3],
-    int[1][2][3][4],
-    int[1][2][3][4][5],
+//    int[1],
+//    int[1][2],
+//    int[1][2][3],
+//    int[1][2][3][4],
+//    int[1][2][3][4][5],
 
 
-    array_s_c_eigen,
-    array_c_s_eigen,
-    array_s_s_eigen,
-    array_c_c_eigen,
+//    array_s_c_eigen,
+//    array_c_s_eigen,
+//    array_s_s_eigen,
+//    array_c_c_eigen,
 
-    array_s_c_int,
-    array_c_s_int,
-    array_s_s_int,
-    array_c_c_int,
+//    array_s_c_int,
+//    array_c_s_int,
+//    array_s_s_int,
+//    array_c_c_int, 
 
-    Eigen::Matrix3f,
-    Eigen::Matrix4f,
-    Eigen::RowVector3f,
-    Eigen::Vector3f,
-
-    Inner,
-    Outer::Mid,
-    Outer
+//    Eigen::Matrix3f,
+//    Eigen::Matrix4f,
+//    Eigen::RowVector3f,
+//    Eigen::Vector3f,
+    
+    //std::tuple<int, chat, inner....>
+    Simple,
+    SimpleEigen
+//    Inner,
+//    Outer::Mid,
+//    Outer
 > AdaptedTypes;
 
 // instantiate for listed types
@@ -160,7 +205,7 @@ TYPED_TEST_CASE(AdaptStructTest, AdaptedTypes);
 
 #include <fstream>
 
-constexpr std::size_t chunk_sz = 8;
+constexpr std::size_t chunk_sz = 1;
 constexpr std::size_t data_sz = 2 * chunk_sz;
 
 template<class T>
@@ -182,37 +227,38 @@ std::vector<T> generate(std::size_t seed = 0){
     return vec;
 }
 
-TYPED_TEST(AdaptStructTest, AdaptStructCreateFixedSize) {
+TYPED_TEST(AdaptStructTest, CreateFixedSize) {
     const auto fd = this->fd;
     const auto path = this->name;
-    h5::ds_t ds = h5::create<TypeParam>(fd, path, h5::current_dims{0});
+    h5::ds_t ds = h5::create<TypeParam>(fd, path, h5::max_dims{0});
 }
 
-/*TYPED_TEST(AdaptStructTest, AdaptStructCreateUnlimitedSize) {
+TYPED_TEST(AdaptStructTest, CreateUnlimitedSize) {
     const auto fd = this->fd;
     const auto path = this->name;
     h5::ds_t ds = h5::create<TypeParam>(fd, path, h5::max_dims{H5S_UNLIMITED});
-}*/
+}
 
-/*TYPED_TEST(AdaptStructTest, AdaptStructCreateWrite) {
+TYPED_TEST(AdaptStructTest, CreateWrite) {
     const auto fd = this->fd;
     const auto path = this->name;
-    h5::ds_t ds = h5::create<TypeParam>(fd, path, h5::current_dims{data_sz});
+    h5::ds_t ds = h5::create<TypeParam>(fd, path, h5::max_dims{data_sz});
     {
         const auto data = generate<TypeParam>();
         h5::write(ds, data);
         const auto read = h5::read<std::vector<TypeParam>>(ds);
         EXPECT_EQ(data, read);
     }
+    //does overwriting work
     {
         const auto data = generate<TypeParam>(2);
         h5::write(ds, data);
         const auto read = h5::read<std::vector<TypeParam>>(ds);
         EXPECT_EQ(data, read);
     }
-}*/
+}
 
-/*TYPED_TEST(AdaptStructTest, AdaptStructWriteDirectly) {
+TYPED_TEST(AdaptStructTest, WriteDirectly) {
     const auto fd = this->fd;
     const auto path = this->name;
     {
@@ -221,9 +267,16 @@ TYPED_TEST(AdaptStructTest, AdaptStructCreateFixedSize) {
         const auto read = h5::read<std::vector<TypeParam>>(fd, path);
         EXPECT_EQ(data, read);
     }
-}*/
+    //does overwriting work
+    {
+        const auto data = generate<TypeParam>(2);
+        h5::write(fd, path, data);
+        const auto read = h5::read<std::vector<TypeParam>>(fd, path);
+        EXPECT_EQ(data, read);
+    }
+}
 
-/*TYPED_TEST(AdaptStructTest, AdaptStructWriteDirectlyUnlimited) {
+TYPED_TEST(AdaptStructTest, WriteDirectlyUnlimited) {
     const auto fd = this->fd;
     const auto path = this->name;
     {
@@ -232,25 +285,32 @@ TYPED_TEST(AdaptStructTest, AdaptStructCreateFixedSize) {
         const auto read = h5::read<std::vector<TypeParam>>(fd, path);
         EXPECT_EQ(data, read);
     }
-}*/
+    //does overwriting work
+    {
+        const auto data = generate<TypeParam>(2);
+        h5::write(fd, path, data, h5::max_dims{H5S_UNLIMITED});
+        const auto read = h5::read<std::vector<TypeParam>>(fd, path);
+        EXPECT_EQ(data, read);
+    }
+}
 
 
-/*TYPED_TEST(AdaptStructTest, AdaptStructCreateAppend) {
+TYPED_TEST(AdaptStructTest, CreateAppend) {
     const auto fd = this->fd;
     const auto path = this->name;
 
-    std::ofstream out{"gtest_mańual_log_" + std::string{typeid(TypeParam).name()}, std::ios_base::app};
-    out << "---------------------\nAdaptStructCreateAppend\n---------------------\n";
-    out <<path<<std::endl;
-    h5::pt_t pt = h5::create<TypeParam>(fd, path, h5::max_dims{H5S_UNLIMITED});
-    out << "created" << std::endl;
+//    std::ofstream out{"gtest_mańual_log_" + std::string{typeid(TypeParam).name()}, std::ios_base::app};
+//    out << "---------------------\nAdaptStructCreateAppend\n---------------------\n";
+//    out <<path<<std::endl;
+    h5::ds_t ds = h5::create<TypeParam>(fd, path, h5::max_dims{H5S_UNLIMITED});
+//    out << "created" << std::endl;
     const auto vec = generate<TypeParam>();
-    out << "rnged" << std::endl;
-    h5::append(pt, vec);
-    out << "appended" << std::endl;
-}*/
+//    out << "rnged" << std::endl;
+    h5::append(ds, vec);
+//    out << "appended" << std::endl;
+}
 
-/*TYPED_TEST(AdaptStructTest, AdaptStructCreateAppendCompressed) {
+/*TYPED_TEST(AdaptStructTest,CreateAppendCompressed) {
     const auto fd = this->fd;
     const auto path = this->name;
     h5::ds_t ds = h5::create<TypeParam>(fd, path, h5::max_dims{H5S_UNLIMITED}, h5::chunk{chunk_sz} | h5::gzip{9} );
@@ -269,7 +329,7 @@ TYPED_TEST(AdaptStructTest, AdaptStructCreateFixedSize) {
         EXPECT_TRUE(std::equal(data.begin(), data.end(), read.begin() + data.size()));
     }
 }*/
-/*TYPED_TEST(AdaptStructTest, AdaptStructRead) {
+/*TYPED_TEST(AdaptStructTest,Read) {
     const auto path = this->name;
     std::ofstream out{"gtest_mańual_log_" + std::string{typeid(TypeParam).name()}, std::ios_base::app};
     out << "---------------------\nAdaptStructRead\n---------------------\n";

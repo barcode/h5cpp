@@ -4,6 +4,10 @@
 
  */
 
+/**
+ * @file This file contains defines to configure the behaviour of h5cpp
+ */
+
 #ifndef H5CPP_CONFIG_H
 #define H5CPP_CONFIG_H
 
@@ -33,15 +37,6 @@
 #ifndef H5CPP_DEFAULT_COMPRESSION 
 	#define H5CPP_DEFAULT_COMPRESSION 9 //< maximum dimensions of stored arrays
 #endif
-#ifndef H5CPP_RANK_VEC 
-	#define H5CPP_RANK_VEC 1
-#endif
-#ifndef H5CPP_RANK_MAT 
-	#define H5CPP_RANK_MAT 2
-#endif
-#ifndef H5CPP_RANK_CUBE 
-	#define H5CPP_RANK_CUBE 3
-#endif
 
 // implicit conversion enabled by default `-DH5CPP_CONVERSION_EXPLICIT` to disable 
 #ifndef H5CPP_CONVERSION_EXPLICIT
@@ -57,22 +52,20 @@
 #endif
 // redefine to your liking
 #ifndef H5CPP_ERROR_MSG
-	#define H5CPP_ERROR_MSG( msg ) std::string( __FILE__ ) + " line#  " + std::to_string( __LINE__ ) + " : " + msg
+	#if __has_include(<boost/current_function.hpp>)
+		#include <boost/current_function.hpp>
+		#define H5CPP_ERROR_MSG( msg )                              \
+			std::string( __FILE__ )                                 \
+			+ " line#  " + std::to_string( __LINE__ )               \
+			+ " function " + std::string{BOOST_CURRENT_FUNCTION}    \
+			+ " : " + msg
+	#else
+		#define H5CPP_ERROR_MSG( msg )                              \
+			std::string( __FILE__ )                                 \
+			+ " line#  " + std::to_string( __LINE__ )               \
+			+ " : " + msg
+	#endif
 #endif
-
-#ifndef H5CPP_ERROR_MSG
-	#define H5CPP_ERROR_MSG( msg ) std::string( __FILE__ ) + " line#  " + std::to_string( __LINE__ ) + " : " + msg
-#endif
-
-// detecting c++17 if constexpr cond ( ... ){} 
-#ifdef __cpp_if_constexpr
-	#define h5cpp__constexpr constexpr
-	#define h5cpp__assert( condition, msg ) static_assert( condition, msg )
-#else
-	#define h5cpp__constexpr
-	#define h5cpp__assert( condition, msg ) if( !condition ) throw std::runtime_error( "ERROR: "  msg )
-#endif
-
 
 #define H5CPP_CHECK_EQ( call, exception, msg ) if( call == 0 ) throw exception( H5CPP_ERROR_MSG( msg ));
 #define H5CPP_CHECK_NZ( call, exception, msg ) if( call < 0 ) throw exception( H5CPP_ERROR_MSG( msg ));

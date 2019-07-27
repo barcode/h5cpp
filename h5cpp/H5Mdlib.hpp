@@ -4,6 +4,12 @@
  * Author: Varga, Steven <steven@vargaconsulting.ca>
  *
  */
+
+/**
+ * @file This file adds support for the dlib library by specializing
+ * customization points.
+ */
+
 #ifndef  H5CPP_DLIB_HPP 
 #define  H5CPP_DLIB_HPP
 
@@ -15,7 +21,7 @@ namespace h5::dlib {
 			::dlib::memory_manager_stateless_kernel_1<char>,
 			::dlib::row_major_layout>;
 		template <class Object, class T = impl::decay_t<Object>>
-			using is_supported = std::integral_constant<bool, std::is_same_v<Object,h5::dlib::rowmat<T>>>;
+			using is_supported = std::bool_constant<std::is_same_v<Object,h5::dlib::rowmat<T>>>;
 }
 namespace h5::impl {
 	// 1.) object -> H5T_xxx

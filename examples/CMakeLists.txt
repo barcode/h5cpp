@@ -24,10 +24,6 @@ if(HDF5_VERSION VERSION_GREATER 1.12.0)
 	message("H5CPP KITA support is available, see webpage for details...")
 endif()
 
-
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/"
-	"${CMAKE_SOURCE_DIR}/cmake/eigen3"  "${CMAKE_SOURCE_DIR}/cmake/dlib" )
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -44,8 +40,6 @@ find_package(Doxygen QUIET)
 
 list(APPEND CMAKE_INCLUDE_PATH "/usr/include")
 list(APPEND CMAKE_INCLUDE_PATH "/usr/local/include" )
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/" 
-	"${CMAKE_SOURCE_DIR}/cmake/eigen3"  "${CMAKE_SOURCE_DIR}/cmake/dlib" )
 
 find_program(H5CPP 
 	NAME h5cpp
@@ -116,6 +110,8 @@ if( ${dlib_FOUND} )
     else()
         message( "-- Found: dlib library, but it is too old to support c++17 (upgrade dlib)")
     endif()
+else()
+    message("-- Did not find dlib")
 endif()
 
 if( ${Eigen3_FOUND} )
@@ -123,6 +119,8 @@ if( ${Eigen3_FOUND} )
 	add_executable(examples-eigen3 EXCLUDE_FROM_ALL "linalg/eigen3.cpp")
 	target_link_libraries(examples-eigen3 ${LIBS} Eigen3::Eigen )
 	add_dependencies(examples examples-eigen3)
+else()
+	message("-- Did not find eigen3")
 endif()
 
 if( ${ARMADILLO_FOUND} )
@@ -130,6 +128,8 @@ if( ${ARMADILLO_FOUND} )
 	add_executable(examples-arma EXCLUDE_FROM_ALL "linalg/arma.cpp")
 	target_link_libraries(examples-arma ${LIBS})
 	add_dependencies(examples examples-arma)
+else()
+	message("-- Did not find armadillo")
 endif()
 
 if( ${blaze_FOUND} )
@@ -137,6 +137,8 @@ if( ${blaze_FOUND} )
 	add_executable(examples-blaze EXCLUDE_FROM_ALL "linalg/blaze.cpp")
 	target_link_libraries(examples-blaze ${LIBS})
 	add_dependencies(examples examples-blaze)
+else()
+	message("-- Did not find blaze")
 endif()
 
 if( ${ITPP_FOUND} )
@@ -144,6 +146,8 @@ if( ${ITPP_FOUND} )
 	add_executable(examples-itpp EXCLUDE_FROM_ALL "linalg/itpp.cpp")
 	target_link_libraries(examples-itpp ${LIBS}  ${ITPP_LDFLAGS}  )
 	add_dependencies(examples examples-itpp)
+else()
+	message("-- Did not find itpp")
 endif()
 
 if( ${Blitz_FOUND} )
@@ -152,6 +156,8 @@ if( ${Blitz_FOUND} )
 	#target_link_libraries(examples-blitz ${LIBS}  ${Blitz_LDFLAGS} )
 	#TODO: re-add example for blitz++ 
 	#add_dependencies(examples examples-blitz)
+else()
+	message("-- Did not find blitz")
 endif()
 
 if( ${Boost_FOUND} )
@@ -161,6 +167,8 @@ if( ${Boost_FOUND} )
 		add_executable(examples-ublas EXCLUDE_FROM_ALL "linalg/ublas.cpp")
 		target_link_libraries(examples-ublas ${LIBS} )
 		add_dependencies(examples examples-ublas)
+	else()
+		message("-- Did not find biist/numeric/ublas")
 	endif()
 endif()
 
@@ -200,8 +208,10 @@ if( MPI_FOUND AND HDF5_IS_PARALLEL )
 	target_compile_definitions(examples-mpi-throughput PUBLIC ${MPI_CXX_COMPILE_DEFINITIONS})
 	target_include_directories(examples-mpi-throughput PUBLIC ${MPI_CXX_INCLUDE_DIRS})
 	add_dependencies(examples examples-mpi-throughput)
-
-
+elseif(MPI_FOUND)
+	message("-- Did find mpi, but hdf5 is not parallel")
+else()
+	message("-- Did not find mpi")
 endif()
 
 ## attributes ###

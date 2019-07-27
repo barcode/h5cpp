@@ -114,6 +114,12 @@ namespace h5::impl::detail {
         }
     }
 }
+namespace h5::utils {
+template <class T, std::size_t N>
+ constexpr bool is_supported<std::array<T, N>> = true;
+template <class T, std::size_t N>
+ constexpr bool is_supported<T[N]> = true; 
+    }
 
 /* template specialization from hid_t< .. > type which provides syntactic sugar in the form
  * h5::dt_t<int> dt; 
@@ -234,6 +240,10 @@ namespace h5::impl::detail {
         }
     };
 }
+namespace h5::utils { 
+        template <class Scalar, int Rs, int Cs, int Options>
+        static constexpr bool is_supported<Eigen::Matrix<Scalar, Rs, Cs, Options, Rs, Cs >> = true; 
+    }
 #endif
 
 #if ! defined (_h5cpp_stringify_impl) && __has_include(<boost/preprocessor/seq/for_each.hpp>)
@@ -264,5 +274,9 @@ namespace h5::impl::detail {
         template <> struct name<T> {                                            \
             static constexpr char const * value = _h5cpp_stringify(T);          \
         };                                                                      \
+    }                                                                           \
+    namespace h5::utils {                                                       \
+        template <>                                                             \
+        constexpr bool is_supported<T> = true;                           \
     }
 #endif

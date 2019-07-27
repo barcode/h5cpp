@@ -194,6 +194,12 @@ namespace h5 {
 		pt.append( ref );
 	}
 
+	template<class T> inline
+	void append( h5::ds_t& ds, const T& ref){
+		h5::pt_t pt{ds};
+		append( pt, ref );
+	}
+
 	inline void flush( h5::pt_t& pt) try {
 		pt.flush( );
 	} catch ( const std::runtime_error& e){

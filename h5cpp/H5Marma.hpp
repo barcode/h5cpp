@@ -4,6 +4,12 @@
  * Author: Varga, Steven <steven@vargaconsulting.ca>
  *
  */
+
+/**
+ * @file This file adds support for the armadillo library by specializing
+ * customization points.
+ */
+
 #ifndef  H5CPP_ARMA_HPP 
 #define  H5CPP_ARMA_HPP
 
@@ -16,7 +22,7 @@ namespace h5::arma {
 
 		// is_linalg_type := filter
 		template <class Object, class T = impl::decay_t<Object>> using is_supported =
-		std::integral_constant<bool, std::is_same_v<Object,h5::arma::cube<T>> || std::is_same_v<Object,h5::arma::colmat<T>>
+		std::bool_constant<std::is_same_v<Object,h5::arma::cube<T>> || std::is_same_v<Object,h5::arma::colmat<T>>
 			|| std::is_same_v<Object,h5::arma::rowvec<T>> ||  std::is_same_v<Object,h5::arma::colvec<T>>>;
 }
 
