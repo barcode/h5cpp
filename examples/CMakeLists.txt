@@ -100,10 +100,10 @@ else()
 endif()
 
 if( ${dlib_FOUND} )
+    # dlib doesn't like c++17 in prior versions
     if(dlib_VERSION VERSION_GREATER_EQUAL "19.5")
         message( "-- Found: dlib library, added to examples" )
         add_executable(examples-dlib EXCLUDE_FROM_ALL "linalg/dlib.cpp")
-        # dlib doesn't like c++17
         target_compile_options(examples-dlib PRIVATE "-w")
         target_link_libraries(examples-dlib ${LIBS} dlib::dlib)
         add_dependencies(examples examples-dlib)
@@ -215,9 +215,9 @@ else()
 endif()
 
 ## attributes ###
-#add_executable(examples-attributes EXCLUDE_FROM_ALL "attributes/attributes.cpp")
-#target_link_libraries(examples-attributes ${LIBS} )
-#add_dependencies(examples examples-attributes)
+add_executable(examples-attributes EXCLUDE_FROM_ALL "attributes/attributes.cpp")
+target_link_libraries(examples-attributes ${LIBS} )
+add_dependencies(examples examples-attributes)
 
 ## before-after: before ###
 add_executable(examples-before EXCLUDE_FROM_ALL
@@ -251,7 +251,9 @@ add_dependencies(examples examples-compound)
 #add_library(examples-multi-tu02 OBJECT "multi-tu/tu_02.cpp")
 
 #add_executable(examples-multi-tu EXCLUDE_FROM_ALL "multi-tu/main.cpp")
-#target_link_libraries(examples-multi-tu  examples-multi-tu01 examples-multi-tu02 ${LIBS}   )
+#target_link_libraries(examples-multi-tu
+#    $<TARGET_OBJECTS:examples-multi-tu01>
+#    $<TARGET_OBJECTS:examples-multi-tu02> ${LIBS} )
 #add_dependencies(examples examples-multi-tu)
 
 ## basics ###
@@ -279,11 +281,43 @@ add_executable(examples-transform EXCLUDE_FROM_ALL "transform/transform.cpp")
 target_link_libraries(examples-transform ${LIBS} )
 add_dependencies(examples examples-transform)
 
-if(Boost_FOUND AND Eigen3_FOUND)
-    add_executable(examples-boost-macro-generate 
-        boost-macro-generate/struct.cpp
-    )
-    target_link_libraries(examples-boost-macro-generate ${LIBS} )
+## packet-table ###
+if( ${Eigen3_FOUND} AND ${ARMADILLO_FOUND} )
+	add_executable(examples-packettable EXCLUDE_FROM_ALL "packet-table/packettable.cpp")
+	target_link_libraries(examples-packettable ${LIBS} Eigen3::Eigen )
+	add_dependencies(examples examples-packettable)
 endif()
 
+if( ${Eigen3_FOUND} AND ${ARMADILLO_FOUND} )
+	add_executable(examples-packettable-batches EXCLUDE_FROM_ALL "packet-table/packet_batches.cpp")
+	target_link_libraries(examples-packettable-batches ${LIBS} Eigen3::Eigen  ${ARMADILLO_LIBRARIES})
+	add_dependencies(examples examples-packettable-batches)
+endif()
 
+## utf ###
+add_executable(examples-utf EXCLUDE_FROM_ALL "utf/utf.cpp")
+target_link_libraries(examples-utf ${LIBS} )
+add_dependencies(examples examples-utf)
+
+## string ###
+add_executable(examples-string EXCLUDE_FROM_ALL "string/string.cpp")
+target_link_libraries(examples-string ${LIBS} )
+add_dependencies(examples examples-string)
+
+## optimized ###
+add_executable(examples-optimized EXCLUDE_FROM_ALL "optimized/optimized.cpp")
+target_link_libraries(examples-optimized ${LIBS} )
+add_dependencies(examples examples-optimized)
+
+### kita ###
+#add_executable(examples-kita EXCLUDE_FROM_ALL "kita/kita.cpp")
+#target_link_libraries(examples-kita ${LIBS} )
+#add_dependencies(examples examples-kita)
+
+## adapt struct macro ###
+if(Boost_FOUND AND Eigen3_FOUND)
+    add_executable(examples-adapt-struct-macro
+        adapt_struct_macro/struct.cpp
+    )
+    target_link_libraries(examples-adapt-struct-macro ${LIBS} )
+endif()

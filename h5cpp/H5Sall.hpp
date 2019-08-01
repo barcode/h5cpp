@@ -80,16 +80,16 @@ namespace h5::impl {
 			for(int i=0; i<rank; i++) data[i] = *(list.begin() + i);
 		}
 		// support linalg objects upto any dimensions
-    private:
-        template<class A, std::size_t N2,std::size_t...Idx>
-        array( const std::array<A, N2>& l, std::index_sequence<Idx...>) :
-            rank{sizeof... (Idx)}, data{l[Idx]...}
-        {}
-    public:
-        template<class A, std::size_t N2, class = std::enable_if_t<N2 <= N && std::is_integral_v<A>>>
-        array( const std::array<A, N2>& l ) : array(l, std::make_index_sequence<N2>{})
-        {}
-        
+		private:
+			template<class A, std::size_t N2,std::size_t...Idx>
+			array( const std::array<A, N2>& l, std::index_sequence<Idx...>) :
+				rank{sizeof... (Idx)}, data{l[Idx]...}
+			{}
+		public:
+			template<class A, std::size_t N2, class = std::enable_if_t<N2 <= N && std::is_integral_v<A>>>
+			array( const std::array<A, N2>& l ) : array(l, std::make_index_sequence<N2>{})
+			{}
+
 		// automatic conversion to std::array means to collapse tail dimensions
 		template<class A>
 		operator const std::array<A,0> () const {
@@ -123,25 +123,24 @@ namespace h5::impl {
 		explicit operator array<C>() const {
 			array<C> arr;
 			arr.rank = rank;
-            std::memcpy(
-                static_cast<void*>(arr.data), //dest
-                static_cast<const void*>(data), //src
-                sizeof(hsize_t) * rank
-            );
+			std::memcpy(
+				static_cast<void*>(arr.data),   //dest
+				static_cast<const void*>(data), //src
+				sizeof(hsize_t) * rank);
 			return arr;
 		}
 
-		      hsize_t& operator[](size_t i)       { return *(data + i); }
+		hsize_t& operator[](size_t i){ return *(data + i); }
 		const hsize_t& operator[](size_t i) const { return *(data + i); }
-		      hsize_t* operator*()       { return data; }
+		hsize_t* operator*() { return data; }
 		const hsize_t* operator*() const { return data; }
 
 		using type = T;
 		size_t size() const { return rank; }
 		const hsize_t* begin()const { return data; }
-		hsize_t*       begin()      { return data; }
-        const hsize_t* end()const { return data + rank; }
-        hsize_t*       end()      { return data + rank; }
+		hsize_t* begin() { return data; }
+		const hsize_t* end() const { return data + rank; }
+		hsize_t* end() { return data + rank; }
 		int rank;
 		hsize_t data[N];
 	};

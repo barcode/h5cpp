@@ -138,8 +138,8 @@ namespace h5 {
 
 		h5::mute();
 		//NOTE: this call is unchecked on purpose, return value -1 means the path doesn't exist along to 
-		//queried leaf node. The missing path will be created by h5::create 
-		h5::ds_t ds = (H5Lexists(fd, dataset_path.c_str(), H5P_DEFAULT ) > 0) ? // will throw error
+		//queried leaf node. The missing path will be created by h5::create
+        h5::ds_t ds = h5::exists(fd, dataset_path) ? // will throw error
 			h5::open( fd, dataset_path, dapl) : h5::create<T>(fd, dataset_path, args..., current_dims );
 		h5::unmute();
  		h5::write<T>(ds, ptr,  args...);
@@ -193,7 +193,7 @@ namespace h5 {
 
 		//NOTE: this call is unchecked on purpose, return value -1 means the path doesn't exist along to 
 		//queried leaf node. The missing path will be created by h5::create 
-		h5::ds_t ds = ( H5Lexists(fd, dataset_path.c_str(), H5P_DEFAULT ) > 0 ) ?
+		h5::ds_t ds = h5::exists(fd, dataset_path) ?
 			h5::open( fd, dataset_path, dapl) : h5::create<element_t>(fd, dataset_path, args..., current_dims );
 		h5::unmute();
  		return h5::write<T>(ds, ref,  args...);

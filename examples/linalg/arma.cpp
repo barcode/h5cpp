@@ -17,23 +17,16 @@ int main(){
 		arma::vec V( {1.,2.,3.,4.,5.,6.,7.,8.}); 	// create a vector
 		// simple one shot write that computes current dimensions and saves matrix
 		h5::write( "arma.h5", "one shot create write",  V);
-		// what if you want to position a matrix inside a higher dimension with some added complexity?
-        
-        h5::create<double>("arma.h5", "arma vec inside matrix",
-                   h5::current_dims{10,20}
-                           ,h5::max_dims{10,H5S_UNLIMITED});
-        h5::write( "arma.h5", "arma vec inside matrix",  V // object contains 'count' and rank being written
+		// what if you want to position a matrix inside a higher dimension with some added complexity?	
+		h5::write( "arma.h5", "arma vec inside matrix",  V // object contains 'count' and rank being written
+			,h5::current_dims{40,50}  // control file_space directly where you want to place vector
 			,h5::offset{5,0}            // when no explicit current dimension given current dimension := offset .+ object_dim .* stride (hadamard product)  
  			,h5::count{1,1}
 			,h5::stride{3,5}
 			,h5::block{2,4}
+			,h5::max_dims{40,H5S_UNLIMITED}  // wouldn't it be nice to have unlimited dimension? if no explicit chunk is set, then the object dimension 
+							 // is used as unit chunk
 		);
-        arma::vec V2( {4.,3.,2.,1.,8.,7.,6.,5.});
-        h5::write( "arma.h5", "arma vec inside matrix",  V2 // object contains 'count' and rank being written
-                  ,h5::offset{5,4}            // when no explicit current dimension given current dimension := offset .+ object_dim .* stride (hadamard product)  
- 			,h5::count{1,1}
-//                  ,h5::stride{3,5}
-                  ,h5::block{1,8} );
 	}
 	{ // CREATE - READ: we're reading back the dataset created in the very first step
 	  // note that data is only data, can be reshaped, cast to any format and content be modified through filtering 

@@ -207,8 +207,8 @@ namespace h5 {
 			h5::sp_t file_space = h5::get_space( ds );
 			h5::get_simple_extent_dims(file_space, size);
 		} else {
-            h5::block_t  default_block{1,1,1,1,1,1,1};
-            const h5::block_t& block = arg::get( default_block, args...);
+			h5::block_t  default_block{1,1,1,1,1,1,1};
+			const h5::block_t& block = arg::get( default_block, args...);
 			for(int i=0;i<count.rank;i++) size[i] = count[i] * block[i];
 			size.rank = count.rank;
 		}

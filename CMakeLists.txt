@@ -57,11 +57,11 @@ if(H5CPP_BUILD_TESTS)
 endif()
 
 
-#installation
 target_include_directories(h5cpp INTERFACE
 	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
 )
 
+#installation target directories
 set(INSTALL_DIR_CMAKE    "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/cmake/h5cpp")
 set(INSTALL_DIR_INCLUDE  "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}")
 set(INSTALL_DIR_EXAMPLES "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/h5cpp")
@@ -74,6 +74,7 @@ install(DIRECTORY h5cpp DESTINATION ${INSTALL_DIR_INCLUDE})
 #targets
 install(TARGETS h5cpp EXPORT h5cpp-targets)
 
+#install examples
 install(DIRECTORY examples/attributes     DESTINATION "${INSTALL_DIR_EXAMPLES}")
 install(DIRECTORY examples/basics         DESTINATION "${INSTALL_DIR_EXAMPLES}")
 install(DIRECTORY examples/before-after   DESTINATION "${INSTALL_DIR_EXAMPLES}")
@@ -99,9 +100,11 @@ write_basic_package_version_file(
     COMPATIBILITY AnyNewerVersion
 )
 
+#export project and target
 export(PACKAGE h5cpp)
 export(EXPORT h5cpp-targets)
 
+#install target export and config / version file
 install(EXPORT h5cpp-targets DESTINATION ${INSTALL_DIR_CMAKE})
 install(FILES
     ${CMAKE_BINARY_DIR}/h5cpp-config.cmake

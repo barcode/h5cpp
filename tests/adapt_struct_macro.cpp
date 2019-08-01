@@ -5,6 +5,16 @@
 
 #define GOOGLE_STRIP_LOG 1
 
+#include <fstream>
+
+namespace SomeNameSpace {
+ struct StructType;
+}
+
+
+
+
+
 //force enable everything
 #define H5CPP_USE_DLIB
 #define H5CPP_USE_BLAZE
@@ -14,18 +24,30 @@
 #define H5CPP_USE_UBLAS_MATRIX
 #define H5CPP_USE_UBLAS_VECTOR
 
+#include <boost/preprocessor/seq/for_each.hpp>
+#include <boost/preprocessor/variadic/to_seq.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/vector.hpp>
+
 #include <dlib/matrix.h>
 #include <blaze/Blaze.h>
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <itpp/itbase.h>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>
 
-#include <h5cpp/all>
-
 #include <gtest/gtest.h>
+
+#include <h5cpp/core>
+#include "struct.h"
+#include <h5cpp/io>
+
 #include "abstract.h"
 
+// ////////////////////////////////////////////////////////////////////////// //
+// ------------------------------- data types ------------------------------- //
+// ////////////////////////////////////////////////////////////////////////// //
 
 typedef unsigned long long int MyUInt;
 
@@ -39,32 +61,59 @@ using array_s_c_int = std::array<int[3], 2>;
 using array_c_s_int = std::array<int, 3>[2];
 using array_c_c_int = int[2][3];
 
+namespace Namespace
+{
+    struct InNamespace
+    {
+        std::uint64_t idx;
+        float x;
+        float y;
+        float z;
+    };
+}
+
 struct Simple {
     MyUInt              idx;
-    char       _char;
+    char                _char;
     unsigned char       _uchar;
-    short      _short;
+    short               _short;
     unsigned short      _ushort;
-    int        _int;
+    int                 _int;
     unsigned int        _uint;
-    long       _long;
+    long                _long;
     unsigned long       _ulong;
-    long long  _llong;
+    long long           _llong;
     unsigned long long  _ullong;
     float               _float;
     double              _double;
     long double         _ldouble;
     bool                _bool;
 };
+
+struct SimpleWithPadding {
+    MyUInt              idx;
+    char                _char;
+    double              _double;
+};
+
 struct SimpleEigen {
+    MyUInt                    idx;
+    Eigen::Matrix4f           _mat4f;
+    Eigen::Quaternion<double> _quat;
+    Eigen::Vector3f           _vec3f;
+};
+
+struct SimpleEigenWithPadding {
     MyUInt              idx;
     Eigen::Vector3f     _vec3f;
     Eigen::Matrix4f     _mat4f;
 };
+
 struct Inner {
     MyUInt              idx;
     Simple              _simple;
     SimpleEigen         _eigen;
+//    sn::struct_type     _snst;
     array_s_c_eigen     _ar_s_c_eigen;
     array_c_s_eigen     _ar_c_s_eigen;
     array_s_s_eigen     _ar_s_s_eigen;
@@ -75,18 +124,42 @@ struct Inner {
     array_c_c_int       _ar_c_c_int;
 };
 
-
-
 struct Outer {
     struct Mid {
         MyUInt  idx;   // typedef type
-        Inner   ar[4]; // array of custom type
+        Inner   ar[2]; // array of custom type
+        Namespace::InNamespace inname;
     };
     MyUInt                idx;            // typedef type
-    Mid                   ar[3][8]; // array of arrays
+    Mid                   ar[2][3]; // array of arrays
 };
 
-//generate glue code required by h5cpp
+// ////////////////////////////////////////////////////////////////////////// //
+// ----------------------------- helper macros ------------------------------ //
+// ////////////////////////////////////////////////////////////////////////// //
+#define VAR_SEQ_FOR_EACH(macro, data, ...)                                      \
+    BOOST_PP_SEQ_FOR_EACH(macro, data, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+#define DO_OUT(R, data, child) << t.child << " "
+#define DO_CMP(R, data, child) binaryEqual(l.child, r.child) &&
+
+#define MAKE_COUT_AND_COMPARE(T,...)                            \
+    std::ostream& operator<<(std::ostream& out, const T& t) {   \
+        out VAR_SEQ_FOR_EACH(DO_OUT, , __VA_ARGS__);            \
+        return out;                                             \
+    }                                                           \
+    bool binaryEqual(const T& l, const T& r) {                \
+        return VAR_SEQ_FOR_EACH(DO_CMP, , __VA_ARGS__) true;    \
+    }
+
+#define H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_MAKE_COUT(T,...)    \
+    MAKE_COUT_AND_COMPARE(T, __VA_ARGS__)                       \
+    H5CPP_ADAPT_AND_REGISTER_STRUCT(T, __VA_ARGS__)
+// ////////////////////////////////////////////////////////////////////////// //
+// -------------------- output / compare for base types --------------------- //
+// ////////////////////////////////////////////////////////////////////////// //
+
+
 template<class T, std::size_t N>
 std::ostream& operator<<(std::ostream& out, const std::array<T,N>& t)
 {
@@ -96,26 +169,82 @@ std::ostream& operator<<(std::ostream& out, const std::array<T,N>& t)
 template<class T, std::size_t N>
 std::ostream& operator<<(std::ostream& out, const T t[N] )
 {
-    for(std::size_t i = 0; i < N;++i) out << t.at(i) << " ";
+    for(std::size_t i = 0; i < N;++i) out << t[i] << " ";
     return out;
 }
 
-#define _do_out(R, data, child) << t.child << " "
-//has to be memcmp because nan != nan
-#define _do_eq(R, data, child) (std::memcmp( (const void*) &l.child, (const void*) &r.child, sizeof(r.child)) == 0) &&
-#define H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(T,...)             \
-    std::ostream& operator<<(std::ostream& out, const T& t)         \
-    {                                                               \
-        out _h5cpp_variadic_for_each(_do_out, T, __VA_ARGS__);      \
-        return out;                                                 \
-    }                                                               \
-    bool operator==(const T& l, const T& r)                         \
-    {                                                               \
-        return _h5cpp_variadic_for_each(_do_eq,, __VA_ARGS__) true; \
-    }                                                               \
-    H5CPP_ADAPT_AND_REGISTER_STRUCT(T,__VA_ARGS__)
+template <class S>
+std::ostream& operator<<(std::ostream& out, const Eigen::Quaternion<S>& q)
+{
+    out << q.w() << ' '<< q.x() << ' '<< q.y() << ' '<< q.z() << ' ';
+    return out;
+}
+template<class T>
+std::enable_if_t<std::is_integral_v<T> || std::is_floating_point_v<T>, bool>
+binaryEqual(const T& l, const T& r)
+{
+    return (std::memcmp( (const void*) &l, (const void*) &r, sizeof(T)) == 0);
+}
 
-H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(
+template <class S, int R, int C, int O, int Mr, int Mc>
+bool binaryEqual(const Eigen::Matrix<S,R,C,O,Mr,Mc>& l, const Eigen::Matrix<S,R,C,O,Mr,Mc>& r)
+{
+    if(l.cols() != r.cols() || l.rows() != r.rows())
+        return false;
+    
+    for(int ir = 0; ir < l.rows(); ++ ir)
+        for(int ic = 0; ic < l.cols(); ++ ic)
+            if(!binaryEqual(r(ir, ic), l(ir, ic)))
+            {
+                return false;
+            }
+    return true;
+}
+
+template <class S>
+bool binaryEqual(const Eigen::Quaternion<S>& l, const Eigen::Quaternion<S>& r)
+{
+    return binaryEqual(l.x(),r.x()) &&
+           binaryEqual(l.y(),r.y()) &&
+           binaryEqual(l.z(),r.z()) &&
+           binaryEqual(l.w(),r.w());
+}
+
+template<class T, std::size_t N>
+bool binaryEqual(const std::array<T,N>& l, const std::array<T,N>& r);
+
+template<class T, std::size_t N>
+bool binaryEqual(T (&l)[N], T (&r)[N]) {
+    for(std::size_t i = 0; i < N;++i)
+        if(!binaryEqual(l[i], r[i]))
+            return false;
+    return true;
+}
+
+template<class T, std::size_t N>
+bool binaryEqual(const std::array<T,N>& l, const std::array<T,N>& r) {
+    for(std::size_t i = 0; i < N;++i)
+        if(!binaryEqual(l.at(i), r.at(i)))
+            return false;
+    return true;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// ------------------------------- macro calls ------------------------------ //
+// ////////////////////////////////////////////////////////////////////////// //
+MAKE_COUT_AND_COMPARE(
+    SomeNameSpace::StructType,
+    field1, field2, field3, field4, field5,
+    field6, field7, field8, field9
+)
+
+H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_MAKE_COUT(
+    Namespace::InNamespace,
+    idx, x, y, z
+)
+
+H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_MAKE_COUT(
     Simple,
     idx,
     _char,
@@ -134,14 +263,28 @@ H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(
     _bool
 )
 
-H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(
+H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_MAKE_COUT(
+    SimpleWithPadding,
+    idx,
+    _char,
+    _double
+    )
+
+H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_MAKE_COUT(
     SimpleEigen,
+    idx,
+    _mat4f,
+    _quat,
+    _vec3f
+)
+
+H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_MAKE_COUT(
+    SimpleEigenWithPadding,
     idx,
     _vec3f,
     _mat4f
-)
-
-H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(
+    )
+H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_MAKE_COUT(
     Inner,
     idx,
     _simple,
@@ -156,60 +299,92 @@ H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(
     _ar_c_c_int
 )
 
-H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(
+H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_MAKE_COUT(
     Outer::Mid,
-    idx, ar
+    idx, ar, inname
 )
 
-H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_COUT(
+H5CPP_ADAPT_AND_REGISTER_STRUCT_AND_MAKE_COUT(
     Outer,
     idx, ar
 )
 
 
-template <typename T> class AdaptStructTest : public AbstractTest<T> {};
-typedef ::testing::Types<
-    H5CPP_TEST_PRIMITIVE_TYPES, // check nothing broke / everything works as expected
-//    int[1],
-//    int[1][2],
-//    int[1][2][3],
-//    int[1][2][3][4],
-//    int[1][2][3][4][5],
 
 
-//    array_s_c_eigen,
-//    array_c_s_eigen,
-//    array_s_s_eigen,
-//    array_c_c_eigen,
 
-//    array_s_c_int,
-//    array_c_s_int,
-//    array_s_s_int,
-//    array_c_c_int, 
+// ////////////////////////////////////////////////////////////////////////// //
+// ------------------------------- test setup ------------------------------- //
+// ////////////////////////////////////////////////////////////////////////// //
 
-//    Eigen::Matrix3f,
-//    Eigen::Matrix4f,
-//    Eigen::RowVector3f,
-//    Eigen::Vector3f,
-    
-    //std::tuple<int, chat, inner....>
-    Simple,
-    SimpleEigen
-//    Inner,
-//    Outer::Mid,
-//    Outer
-> AdaptedTypes;
+#define TYPES_TO_CHECK                                          \
+    /* check nothing broke / everything works as expected */    \
+    H5CPP_TEST_PRIMITIVE_TYPES,                                 \
+    SomeNameSpace::StructType,                                  \
+                                                                \
+    /* check c-array types */                                   \
+    /*int[1],                                                   \
+    int[1][2],                                                  \
+    int[1][2][3],                                               \
+    int[1][2][3][4],                                            \
+    int[1][2][3][4][5],*/                                       \
+                                                                \
+    /* check combinations of c/std arrays */                    \
+    array_s_c_int,                                            \
+    /*array_c_s_int,*/                                              \
+    array_s_s_int,                                              \
+    /*array_c_c_int,*/                                              \
+                                                                \
+    /* check fixed size eigen types */                          \
+    /*Eigen::Matrix3f,*/                                            \
+    /*Eigen::Matrix4f,*/                                            \
+    /*Eigen::RowVector3f,*/                                         \
+    /*Eigen::Vector3f,*/                                            \
+                                                                \
+    /* check combinations of c/std arrays and eigen types */    \
+    array_s_c_eigen,                                          \
+    /*array_c_s_eigen,*/                                            \
+    array_s_s_eigen,                                            \
+    /*array_c_c_eigen,*/                                            \
+                                                                \
+    /* check adapted structure types */                         \
+    Namespace::InNamespace,                                     \
+    Simple,                                                     \
+    SimpleWithPadding,                                          \
+    SimpleEigen,                                                \
+    SimpleEigenWithPadding,                                     \
+    Inner,                                                      \
+    Outer::Mid,                                                 \
+    Outer                                                       \
+                                                                \
+    /* check tuple types */                                     \
+    /*std::tuple<int>,                                          \
+    std::tuple<int, char>,                                      \
+    std::tuple<int, char, array_s_c_int, array_s_c_eigen>,      \
+    std::tuple<Simple, SimpleEigen, Inner, Outer::Mid, Outer>*/
 
-// instantiate for listed types
-TYPED_TEST_CASE(AdaptStructTest, AdaptedTypes);
+// ////////////////////////////////////////////////////////////////////////// //
+// ------------------------------- unit tests ------------------------------- //
+// ////////////////////////////////////////////////////////////////////////// //
 
-#include <fstream>
+typedef ::testing::Types<TYPES_TO_CHECK> BasicRdWrApTestTypes;
 
-constexpr std::size_t chunk_sz = 1;
+// the values have to be small (otherwise the output file will be large)
+//used as chunk size
+constexpr std::size_t chunk_sz = 4;
+//amount of data generated by calling generate<>
 constexpr std::size_t data_sz = 2 * chunk_sz;
+//offset when writing into the middle of a chunk
+constexpr std::size_t in_chunk_offset = chunk_sz / 2;
+
+template<class, class = void>
+struct has_idx : std::false_type {};
 
 template<class T>
-std::vector<T> generate(std::size_t seed = 0){
+struct has_idx<T, std::void_t<decltype(&T::idx)>> : std::true_type {};
+
+template<class T>
+std::vector<T> generate(std::size_t seed) {
     std::vector<T> vec (data_sz);
     std::mt19937 gen{seed};
     std::uniform_int_distribution<std::uint8_t> dist{0, 255};
@@ -217,166 +392,13 @@ std::vector<T> generate(std::size_t seed = 0){
     std::uint8_t* end = static_cast<std::uint8_t*>(static_cast<void*>(&vec.back() + 1));
     for(std::uint8_t* it = begin; it < end; ++it )
         *it = dist(gen);
-    if constexpr(
-        std::is_same_v<T, Inner> ||
-        std::is_same_v<T, Outer::Mid> ||
-        std::is_same_v<T, Outer>
-        )
-        for(int i=0; i<vec.size(); i++ )
+    if constexpr(has_idx<T>::value)
+        for(int i=0; i < vec.size(); i++ )
             vec[i].idx = i;
     return vec;
 }
 
-TYPED_TEST(AdaptStructTest, CreateFixedSize) {
-    const auto fd = this->fd;
-    const auto path = this->name;
-    h5::ds_t ds = h5::create<TypeParam>(fd, path, h5::max_dims{0});
-}
-
-TYPED_TEST(AdaptStructTest, CreateUnlimitedSize) {
-    const auto fd = this->fd;
-    const auto path = this->name;
-    h5::ds_t ds = h5::create<TypeParam>(fd, path, h5::max_dims{H5S_UNLIMITED});
-}
-
-TYPED_TEST(AdaptStructTest, CreateWrite) {
-    const auto fd = this->fd;
-    const auto path = this->name;
-    h5::ds_t ds = h5::create<TypeParam>(fd, path, h5::max_dims{data_sz});
-    {
-        const auto data = generate<TypeParam>();
-        h5::write(ds, data);
-        const auto read = h5::read<std::vector<TypeParam>>(ds);
-        EXPECT_EQ(data, read);
-    }
-    //does overwriting work
-    {
-        const auto data = generate<TypeParam>(2);
-        h5::write(ds, data);
-        const auto read = h5::read<std::vector<TypeParam>>(ds);
-        EXPECT_EQ(data, read);
-    }
-}
-
-TYPED_TEST(AdaptStructTest, WriteDirectly) {
-    const auto fd = this->fd;
-    const auto path = this->name;
-    {
-        const auto data = generate<TypeParam>();
-        h5::write(fd, path, data);
-        const auto read = h5::read<std::vector<TypeParam>>(fd, path);
-        EXPECT_EQ(data, read);
-    }
-    //does overwriting work
-    {
-        const auto data = generate<TypeParam>(2);
-        h5::write(fd, path, data);
-        const auto read = h5::read<std::vector<TypeParam>>(fd, path);
-        EXPECT_EQ(data, read);
-    }
-}
-
-TYPED_TEST(AdaptStructTest, WriteDirectlyUnlimited) {
-    const auto fd = this->fd;
-    const auto path = this->name;
-    {
-        const auto data = generate<TypeParam>();
-        h5::write(fd, path, data, h5::max_dims{H5S_UNLIMITED});
-        const auto read = h5::read<std::vector<TypeParam>>(fd, path);
-        EXPECT_EQ(data, read);
-    }
-    //does overwriting work
-    {
-        const auto data = generate<TypeParam>(2);
-        h5::write(fd, path, data, h5::max_dims{H5S_UNLIMITED});
-        const auto read = h5::read<std::vector<TypeParam>>(fd, path);
-        EXPECT_EQ(data, read);
-    }
-}
+#include "basic_read_write_append_test_cases.hpp"
 
 
-TYPED_TEST(AdaptStructTest, CreateAppend) {
-    const auto fd = this->fd;
-    const auto path = this->name;
-
-//    std::ofstream out{"gtest_mańual_log_" + std::string{typeid(TypeParam).name()}, std::ios_base::app};
-//    out << "---------------------\nAdaptStructCreateAppend\n---------------------\n";
-//    out <<path<<std::endl;
-    h5::ds_t ds = h5::create<TypeParam>(fd, path, h5::max_dims{H5S_UNLIMITED});
-//    out << "created" << std::endl;
-    const auto vec = generate<TypeParam>();
-//    out << "rnged" << std::endl;
-    h5::append(ds, vec);
-//    out << "appended" << std::endl;
-}
-
-/*TYPED_TEST(AdaptStructTest,CreateAppendCompressed) {
-    const auto fd = this->fd;
-    const auto path = this->name;
-    h5::ds_t ds = h5::create<TypeParam>(fd, path, h5::max_dims{H5S_UNLIMITED}, h5::chunk{chunk_sz} | h5::gzip{9} );
-    h5::pt_t pt{ds};
-    const auto data = generate<TypeParam>();
-    {
-        h5::append(pt, data); ///TODO work with ds
-        const auto read = h5::read<std::vector<TypeParam>>(ds);
-        EXPECT_EQ(data, read);
-    }
-    {
-        h5::append(pt, data);
-        const auto read = h5::read<std::vector<TypeParam>>(ds);
-        ASSERT_EQ(data.size()*2, read.size());
-        EXPECT_TRUE(std::equal(data.begin(), data.end(), read.begin()));
-        EXPECT_TRUE(std::equal(data.begin(), data.end(), read.begin() + data.size()));
-    }
-}*/
-/*TYPED_TEST(AdaptStructTest,Read) {
-    const auto path = this->name;
-    std::ofstream out{"gtest_mańual_log_" + std::string{typeid(TypeParam).name()}, std::ios_base::app};
-    out << "---------------------\nAdaptStructRead\n---------------------\n";
-    out <<path<<std::endl;
-
-
-
-	std::vector<TypeParam> vec = generate<TypeParam>();
-    out << "rnged" << std::endl;
-	h5::write(this->fd, path, vec);
-    out << "written1" << std::endl;
-	{  // READ
-		const auto data =  h5::read<std::vector<TypeParam>>(this->fd, path);
-        ASSERT_EQ(vec.size(), data.size());
-        for(std::size_t i = 0; i < vec.size(); ++i) {
-            const auto obj1 = static_cast<const void*>(&vec.at(i));
-            const auto obj2 = static_cast<const void*>(&data.at(i));
-            const auto cmp = std::memcmp(obj1, obj2, sizeof(TypeParam));
-            if(cmp)
-            out << "--\n"
-                <<  "(" << i  << ")\t"
-                << cmp << "\n" << vec.at(i) << "-\n" << data.at(i) << "\n--\n";
-            EXPECT_EQ(cmp, 0);
-        }
-	}
-    out << "read1" << std::endl;
-	{ // PARTIAL READ
-		std::vector<TypeParam> data =  h5::read<std::vector<TypeParam>>(this->fd, path, h5::count{chunk_sz}, h5::offset{data_sz / chunk_sz});
-        out << "pread  "<<data.size() << std::endl;
-        //EXPECT_TRUE(data.size() == 50);
-        out << __LINE__ << std::endl;
-        if constexpr(
-            std::is_same_v<TypeParam, Inner> ||
-            std::is_same_v<TypeParam, Outer::Mid> ||
-            std::is_same_v<TypeParam, Outer>
-            )
-            for(std::size_t i = 0; i < data.size(); ++i)
-            {
-                out << __LINE__ << std::endl;
-       
-                out << data.at(i).idx << std::endl;
-            }
-        out << __LINE__ << std::endl;
-	}
-    out << __LINE__ << std::endl;
-}*/
-/*----------- BEGIN TEST RUNNER ---------------*/
-H5CPP_TEST_RUNNER( int argc, char**  argv );
-/*----------------- END -----------------------*/
 
