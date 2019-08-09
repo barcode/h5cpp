@@ -13,35 +13,6 @@
 #ifndef  H5CPP_STL_HPP 
 #define  H5CPP_STL_HPP
 
-namespace h5::impl {
-    template <template<class...> class Temp, class T, class = void>
-    struct enable_if_specialized {};
-    
-    template <template<class...> class Temp, class T>
-    struct enable_if_specialized<Temp, T, std::void_t<decltype(&Temp<T>::call)>> {
-        template <class R, class...Args> static R get_return_type(R (*)(Args...));
-        using type = decltype (get_return_type(&Temp<T>::call));
-    };
-    
-    template <template<class...> class Temp, class T>
-    using enable_if_specialized_t = typename enable_if_specialized<Temp, T>::type;
-    
-    
-    
-    template <class T, class = void> struct decay{ typedef T type; };    
-    template <class T, class = void> struct rank : public std::integral_constant<size_t,0>{};
-    template <class T, class = void> struct read_data_access;
-    template <class T, class = void> struct write_data_access;
-    template <class T, class = void> struct size_of_dimensions;
-    template <class T, class = void> struct is_supported_element_type : std::false_type {};    
-    
-    template <class T> using decay_t = typename decay<T>::type;
-    
-    template <class T> static constexpr bool rank_v = rank<T>::value;
-    template <class T> static constexpr bool is_supported_element_type_v = is_supported_element_type<T>::value;
-    
-    
-    }
 
 namespace h5::impl::detail {
 /* This structure contains meta information about a type.
@@ -240,12 +211,8 @@ namespace h5::impl {
 	template <class T, signed N> struct decay<const T[N]>{ typedef T* type; };
 	template <class T, signed N> struct decay<T[N]>{ typedef T* type; };
 
-	template <class T> struct decay<std::initializer_list<const T*>>{ typedef const T* type; };
-	template <class T> struct decay<std::initializer_list<T*>>{ typedef T* type; };
 	template <class T> struct decay<std::initializer_list<T>>{ typedef T type; };
 
-	template <class T> struct decay<std::vector<const T*>>{ typedef const T* type; };
-	template <class T> struct decay<std::vector<T*>>{ typedef T* type; };
 	template <class T> struct decay<std::vector<T>>{ typedef T type; };
 
 	// helpers

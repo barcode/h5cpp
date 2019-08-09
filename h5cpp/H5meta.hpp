@@ -82,16 +82,17 @@ namespace h5::arg {
 	}
 }
 
-namespace h5 {
-	/**
-	 * @brief Type-name helper class for compile time id and printout.
-	 *
-	 * \note This is a customization point for new types.
-	 *
-	 * @ingroup customization-point
-	 */
-	template <class T> struct name {
-		static constexpr char const * value = "n/a";
-	};
+namespace h5::impl {
+    template <template<class...> class Temp, class T, class = void>
+    struct enable_if_specialized {};
+    
+    template <template<class...> class Temp, class T>
+    struct enable_if_specialized<Temp, T, std::void_t<decltype(&Temp<T>::call)>> {
+        template <class R, class...Args> static R get_return_type(R (*)(Args...));
+        using type = decltype (get_return_type(&Temp<T>::call));
+    };
+    
+    template <template<class...> class Temp, class T>
+    using enable_if_specialized_t = typename enable_if_specialized<Temp, T>::type;
 }
 #endif

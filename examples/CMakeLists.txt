@@ -86,12 +86,13 @@ include_directories(BEFORE ${CMAKE_SOURCE_DIR})
 
 if( H5CPP_COMPILER_FOUND )
 	add_custom_target(h5cpp-compiler-generated ALL
-		COMMAND	${H5CPP}  attributes/attributes.cpp -- ${CMAKE_CXXFLAGS} -I${H5CPP_LLVM_PATH} -Dattributes/generated.h
-		COMMAND	${H5CPP}  before-after/compound.cpp -- ${CMAKE_CXXFLAGS} -I${H5CPP_LLVM_PATH} -Dbefore-after/generated.h
-		COMMAND	${H5CPP}  compound/struct.cpp -- ${CMAKE_CXXFLAGS} -I${H5CPP_LLVM_PATH} -Dcompound/generated.h
-		COMMAND	${H5CPP}  multi-tu/tu-01.cpp -- ${CMAKE_CXXFLAGS} -I${H5CPP_LLVM_PATH} -Dmulti-tu/tu-01.h
-		COMMAND	${H5CPP}  multi-tu/tu-02.cpp -- ${CMAKE_CXXFLAGS} -I${H5CPP_LLVM_PATH} -Dmulti-tu/tu-02.h
+		COMMAND	${H5CPP}  attributes/attributes.cpp    -- ${CMAKE_CXXFLAGS} -I${H5CPP_LLVM_PATH} -Dattributes/generated.h
+		COMMAND	${H5CPP}  before-after/compound.cpp    -- ${CMAKE_CXXFLAGS} -I${H5CPP_LLVM_PATH} -Dbefore-after/generated.h
+		COMMAND	${H5CPP}  compound/struct.cpp          -- ${CMAKE_CXXFLAGS} -I${H5CPP_LLVM_PATH} -Dcompound/generated.h
+		COMMAND	${H5CPP}  multi-tu/tu-01.cpp           -- ${CMAKE_CXXFLAGS} -I${H5CPP_LLVM_PATH} -Dmulti-tu/tu-01.h
+		COMMAND	${H5CPP}  multi-tu/tu-02.cpp           -- ${CMAKE_CXXFLAGS} -I${H5CPP_LLVM_PATH} -Dmulti-tu/tu-02.h
 		COMMAND	${H5CPP}  packet-table/packettable.cpp -- ${CMAKE_CXXFLAGS} -I${H5CPP_LLVM_PATH} -Dpacket-table/generated.h
+        COMMAND	${H5CPP}  dump/dump.cpp                -- ${CMAKE_CXXFLAGS} -I${H5CPP_LLVM_PATH} -Ddump/generated.h
 		COMMENT "-- generating hdf5 compound type descriptors with h5cpp compiler ...")
 	add_custom_target(examples ALL DEPENDS h5cpp-compiler-generated)
 else()
@@ -321,3 +322,13 @@ if(Boost_FOUND AND Eigen3_FOUND)
     )
     target_link_libraries(examples-adapt-struct-macro ${LIBS} )
 endif()
+
+## dump ###
+add_executable(examples-dump EXCLUDE_FROM_ALL
+    dump/generated.h
+    dump/dump.cpp
+    dump/struct.h
+    dump/utils.hpp
+)
+target_link_libraries(examples-dump ${LIBS} )
+add_dependencies(examples examples-dump)

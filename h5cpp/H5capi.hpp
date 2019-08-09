@@ -233,7 +233,10 @@ namespace h5 {
     
     inline bool exists(const h5::fd_t& fd, const std::string& dataset_path, ::hid_t lapl_id = H5P_DEFAULT)
     {
-        return (H5Lexists(fd, dataset_path.c_str(), H5P_DEFAULT ) > 0);
+        h5::mute();
+        const bool b = (H5Lexists(fd, dataset_path.c_str(), lapl_id ) > 0);
+        h5::unmute();
+        return b;
     }
 }
 #endif

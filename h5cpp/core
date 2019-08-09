@@ -43,6 +43,7 @@
 	#include "H5Sall.hpp"
 	
 	#include "H5meta.hpp"
+	#include "H5customization.hpp"
 	#include "H5Mstl.hpp"
 	#include "H5Marma.hpp"
 	#include "H5Mdlib.hpp"
