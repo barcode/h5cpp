@@ -68,3 +68,7 @@ std::vector<T> generate(std::size_t seed) {
 }
 
 #include "basic_read_write_append_test_cases.hpp"
+
+/*----------- BEGIN TEST RUNNER ---------------*/
+H5CPP_TEST_RUNNER( int argc, char**  argv );
+/*----------------- END -----------------------*/

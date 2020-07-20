@@ -258,7 +258,4 @@ TYPED_TEST(BasicRdWrApTest, CreateAppendWriteElements) {
 	}
 }
 
-/*----------- BEGIN TEST RUNNER ---------------*/
-H5CPP_TEST_RUNNER( int argc, char**  argv );
-/*----------------- END -----------------------*/
 

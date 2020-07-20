@@ -398,7 +398,26 @@ std::vector<T> generate(std::size_t seed) {
     return vec;
 }
 
+
 #include "basic_read_write_append_test_cases.hpp"
 
+TYPED_TEST(BasicRdWrApTest, WriteStructDirectly) {
+    if constexpr(std::is_same_v<SimpleEigen,TypeParam>)
+    {
+        const auto fd = this->fd;
+        const auto path = this->name;
+        {
+            const SimpleEigen data = generate<TypeParam>(0).front();
+            h5::write(fd, path, data);
+            const auto read = h5::read<TypeParam>(fd, path);
+            //        EXPECT_TRUE(binaryEqual(data, read))
+            //        binaryCompare(data, read);
+        }
+    }
+}
+
+/*----------- BEGIN TEST RUNNER ---------------*/
+H5CPP_TEST_RUNNER( int argc, char**  argv );
+/*----------------- END -----------------------*/
 
 
